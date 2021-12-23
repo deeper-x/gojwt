@@ -1,5 +1,9 @@
 ### GOJWT 
 
+installation:
+```bash
+go get -v github.com/deeper-x/gojwt
+```
 
 Implementation example:
 
