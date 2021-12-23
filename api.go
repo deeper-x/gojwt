@@ -1,6 +1,7 @@
 package gojwt
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,32 +63,35 @@ func (jsess *JWTSess) IsAllowed() (bool, error) {
 }
 
 // Refresh is the handler that will be called when a user calls the `/refresh` endpoint
-func (jsess *JWTSess) Refresh() (bool, error) {
+func (jsess *JWTSess) Refresh() (string, error) {
 	tknStr, err := readCookie(jsess.Req)
 	if err != nil {
 		log.Println(err)
-		return false, err
+		return "", err
 	}
 
 	tknValid, err := TokenIsValid(tknStr, &jsess.Claims)
 	if err != nil {
 		log.Println(err)
-		return false, fmt.Errorf("Refresh::tknValid: %w", err)
+		return "", fmt.Errorf("Refresh::tknValid: %w", err)
 	}
 
 	if !tknValid {
-		return false, nil
+		return "", errors.New("token not valid")
 	}
 
 	if isExpired(jsess.Claims) {
-		return false, nil
+		return "", errors.New("token expired")
 	}
 
 	newCookie, err := newToken(&jsess.Claims)
 	if err != nil {
-		return false, fmt.Errorf("Refresh::newCookie: %w", err)
+		return "", fmt.Errorf("Refresh::newCookie: %w", err)
 	}
 
+	// setting cookie
 	http.SetCookie(jsess.RW, newCookie)
-	return false, nil
+
+	token := newCookie.Value
+	return token, nil
 }
