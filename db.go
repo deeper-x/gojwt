@@ -6,9 +6,9 @@ type Credentials struct {
 	Username string `json:"username"`
 }
 
-var users = map[string]string{
+var testusers = map[string]string{
 	"user1": "password1",
 	"user2": "password2",
 }
 
-var jwtKey = []byte("my_secret_key")
+var jwtKey = []byte("change_me")
