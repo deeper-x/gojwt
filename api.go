@@ -80,8 +80,8 @@ func (jsess *JWTSess) Refresh() (string, error) {
 		return "", errors.New("token not valid")
 	}
 
-	if isExpired(jsess.Claims) {
-		return "", errors.New("token expired")
+	if !isExpired(jsess.Claims) {
+		return "", errors.New("token still valid, cannot be updated")
 	}
 
 	newCookie, err := newToken(&jsess.Claims)
