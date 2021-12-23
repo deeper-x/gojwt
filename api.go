@@ -43,8 +43,8 @@ func (jsess *JWTSess) Register(kval string) (string, error) {
 	return tokenString, nil
 }
 
-// IsAllowed is the handler that will be called when a user calls the `/` endpoint
-func (jsess *JWTSess) IsAllowed() (bool, error) {
+// IsAuth check if client is allowed
+func (jsess *JWTSess) IsAuth() (bool, error) {
 	tknStr, err := readCookie(jsess.Req)
 	if err != nil {
 		return false, err
@@ -62,8 +62,8 @@ func (jsess *JWTSess) IsAllowed() (bool, error) {
 	return true, nil
 }
 
-// Refresh is the handler that will be called when a user calls the `/refresh` endpoint
-func (jsess *JWTSess) Refresh() (string, error) {
+// Renew ask for a new token
+func (jsess *JWTSess) Renew() (string, error) {
 	tknStr, err := readCookie(jsess.Req)
 	if err != nil {
 		log.Println(err)

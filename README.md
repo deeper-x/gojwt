@@ -11,12 +11,12 @@ Implementation example:
 func main() {
 	http.HandleFunc("/signin", Login)
 	http.HandleFunc("/protected_content", ProtectedContent)
-	http.HandleFunc("/refresh", Renew)
+	http.HandleFunc("/renew", Renew)
 
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
-// Login index login
+// Login index login, with username and password in the body of a GET request
 func Login(w http.ResponseWriter, req *http.Request) {
 	jsess := gojwt.NewJWTSess(w, req)
 
@@ -29,6 +29,7 @@ func Login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// check fake credentials
 	expectedPassword := "password1"
 
 	if expectedPassword != creds.Password {
@@ -36,6 +37,7 @@ func Login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// client registration
 	token, err := jsess.Register(creds.Username)
 
 	if err != nil {
@@ -44,16 +46,16 @@ func Login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// success - return token
+	// success
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(token))
 }
 
-// ProtectedContent is the registered users only content
+// ProtectedContent is the registered-users-only content
 func ProtectedContent(w http.ResponseWriter, req *http.Request) {
 	jsess := gojwt.NewJWTSess(w, req)
 
-	ok, err := jsess.IsAllowed()
+	ok, err := jsess.IsAuth()
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -66,37 +68,37 @@ func ProtectedContent(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("REGISTERED CONTENT"))
+	w.Write([]byte("WELCOME, THIS IS A SECRET CONTENT\n\n"))
 }
 
-// Renew ask for new token
+// Renew ask for a new token, if available
 func Renew(w http.ResponseWriter, req *http.Request) {
 	jsess := gojwt.NewJWTSess(w, req)
 
-	ok, err := jsess.Refresh()
+	token, err := jsess.Renew()
 	if err != nil {
+		log.Println(err)
+
+		// no token released
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Token cannot be renewed\n\n"))
 		return
 	}
 
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("token cannot still be renewed"))
-		return
-	}
-
+	// token released
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("token renewed"))
+	w.Write([]byte(token))
 }
+
 ```
 
-Client:
+Client example:
 
 ```bash
 # registration
 curl --location --request GET 'http://127.0.0.1:8000/signin' --header 'Content-Type: text/plain' --data-raw '{"username": "user1", "password": "password1"}'
 
-# protected content
+# accessing *protected* content
 curl --location --request GET 'http://127.0.0.1:8000/protected_content' --header 'Cookie: token=<YOUR_TOKEN>'
 
 # renew
