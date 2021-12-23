@@ -36,7 +36,7 @@ func Login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ok, err := jsess.Register(creds.Username)
+	token, err := jsess.Register(creds.Username)
 
 	if err != nil {
 		log.Println(err)
@@ -44,14 +44,9 @@ func Login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	// success
+	// success - return token
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("user registered"))
+	w.Write([]byte(token))
 }
 
 // ProtectedContent is the registered users only content
@@ -93,4 +88,18 @@ func Renew(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("token renewed"))
 }
+```
+
+Client:
+
+```bash
+# registration
+curl --location --request GET 'http://127.0.0.1:8000/signin' --header 'Content-Type: text/plain' --data-raw '{"username": "user1", "password": "password1"}'
+
+# protected content
+curl --location --request GET 'http://127.0.0.1:8000/protected_content' --header 'Cookie: token=<YOUR_TOKEN>'
+
+# renew
+curl --location --request GET 'http://127.0.0.1:8000/refresh' --header 'Cookie: token=<YOUR_TOKEN>'
+
 ```

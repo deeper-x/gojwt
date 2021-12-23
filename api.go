@@ -25,12 +25,12 @@ func NewJWTSess(w http.ResponseWriter, req *http.Request) *JWTSess {
 }
 
 //Register Create the Register handler
-func (jsess *JWTSess) Register(kval string) (bool, error) {
+func (jsess *JWTSess) Register(kval string) (string, error) {
 	expirationTime := time.Now().Add(5 * time.Minute)
 
 	tokenString, err := newJWTToken(kval, expirationTime)
 	if err != nil {
-		return false, fmt.Errorf("Register::tokenString: %w", err)
+		return "", fmt.Errorf("Register::tokenString: %w", err)
 	}
 
 	http.SetCookie(jsess.RW, &http.Cookie{
@@ -39,7 +39,7 @@ func (jsess *JWTSess) Register(kval string) (bool, error) {
 		Expires: expirationTime,
 	})
 
-	return true, nil
+	return tokenString, nil
 }
 
 // IsAllowed is the handler that will be called when a user calls the `/` endpoint
