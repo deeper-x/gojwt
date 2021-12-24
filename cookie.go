@@ -1,7 +1,6 @@
 package gojwt
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -26,7 +25,7 @@ func newJWTToken(username string, expirationTime time.Time) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		return "", fmt.Errorf("newJWTToken: %w", err)
+		return "", err
 	}
 
 	return tokenString, nil
@@ -39,7 +38,7 @@ func TokenIsValid(stoken string, claims *Claims) (bool, error) {
 	})
 
 	if err != nil {
-		return false, fmt.Errorf("TokenIsValid: %w", err)
+		return false, err
 	}
 
 	return tkn.Valid, nil
@@ -49,7 +48,7 @@ func TokenIsValid(stoken string, claims *Claims) (bool, error) {
 func readCookie(r *http.Request) (string, error) {
 	c, err := r.Cookie("token")
 	if err != nil {
-		return "", fmt.Errorf("readCookie: %w", err)
+		return "", err
 	}
 
 	return c.Value, nil
@@ -69,7 +68,7 @@ func newToken(c *Claims) (*http.Cookie, error) {
 	tokenString, err := token.SignedString(jwtKey)
 
 	if err != nil {
-		return cookie, fmt.Errorf("newToken: %w", err)
+		return cookie, err
 	}
 
 	return &http.Cookie{

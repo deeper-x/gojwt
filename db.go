@@ -1,6 +1,6 @@
 package gojwt
 
-// Credentials is a struct to read the username and password from the request body
+// Credentials is a struct user to map the username and password to the request body
 type Credentials struct {
 	Password string `json:"password"`
 	Username string `json:"username"`

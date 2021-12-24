@@ -2,7 +2,6 @@ package gojwt
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -31,7 +30,7 @@ func (jsess *JWTSess) Register(kval string) (string, error) {
 
 	tokenString, err := newJWTToken(kval, expirationTime)
 	if err != nil {
-		return "", fmt.Errorf("Register::tokenString: %w", err)
+		return "", err
 	}
 
 	http.SetCookie(jsess.RW, &http.Cookie{
@@ -52,7 +51,7 @@ func (jsess *JWTSess) IsAuth() (bool, error) {
 
 	tknValid, err := TokenIsValid(tknStr, &jsess.Claims)
 	if err != nil {
-		return false, fmt.Errorf("IsAllowed::tknValid: %w", err)
+		return false, err
 	}
 
 	if !tknValid {
@@ -73,7 +72,7 @@ func (jsess *JWTSess) Renew() (string, error) {
 	tknValid, err := TokenIsValid(tknStr, &jsess.Claims)
 	if err != nil {
 		log.Println(err)
-		return "", fmt.Errorf("Refresh::tknValid: %w", err)
+		return "", err
 	}
 
 	if !tknValid {
@@ -86,7 +85,7 @@ func (jsess *JWTSess) Renew() (string, error) {
 
 	newCookie, err := newToken(&jsess.Claims)
 	if err != nil {
-		return "", fmt.Errorf("Refresh::newCookie: %w", err)
+		return "", err
 	}
 
 	// setting cookie
