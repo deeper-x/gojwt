@@ -1,8 +1,6 @@
 package gojwt
 
 import (
-	"errors"
-	"log"
 	"net/http"
 	"time"
 )
@@ -14,6 +12,14 @@ type JWTSess struct {
 	Claims Claims
 }
 
+// Status is the object describining http outcomes
+type Status struct {
+	Code    int64
+	Message string
+	Success bool
+	Error   error
+}
+
 // NewJWTSess is the JWTSess builder
 func NewJWTSess(w http.ResponseWriter, req *http.Request) *JWTSess {
 	c := Claims{}
@@ -21,6 +27,16 @@ func NewJWTSess(w http.ResponseWriter, req *http.Request) *JWTSess {
 		Claims: c,
 		RW:     w,
 		Req:    req,
+	}
+}
+
+// NewStatus is the result object, with all describing fields
+func NewStatus(cod int64, msg string, sts bool, err error) Status {
+	return Status{
+		Code:    cod,
+		Message: msg,
+		Success: sts,
+		Error:   err,
 	}
 }
 
@@ -43,54 +59,55 @@ func (jsess *JWTSess) Register(kval string) (string, error) {
 }
 
 // IsAuth check if client is allowed
-func (jsess *JWTSess) IsAuth() (bool, error) {
-	tknStr, err := readCookie(jsess.Req)
-	if err != nil {
-		return false, err
+func (jsess *JWTSess) IsAuth() (bool, Status) {
+	tknStr, sts := readCookie(jsess.Req)
+	if sts.Error != nil {
+		return false, sts
 	}
 
-	tknValid, err := TokenIsValid(tknStr, &jsess.Claims)
-	if err != nil {
-		return false, err
+	tknValid, sts := TokenIsValid(tknStr, &jsess.Claims)
+	if sts.Error != nil {
+		return false, sts
 	}
 
 	if !tknValid {
-		return false, nil
+		sts = NewStatus(TKNBROKEN, "token broken", false, nil)
+		return false, sts
 	}
 
-	return true, nil
+	return true, sts
 }
 
 // Renew ask for a new token
-func (jsess *JWTSess) Renew() (string, error) {
-	tknStr, err := readCookie(jsess.Req)
-	if err != nil {
-		log.Println(err)
-		return "", err
+func (jsess *JWTSess) Renew() (string, Status) {
+	tknStr, sts := readCookie(jsess.Req)
+	if sts.Error != nil {
+		return "", sts
 	}
 
-	tknValid, err := TokenIsValid(tknStr, &jsess.Claims)
-	if err != nil {
-		log.Println(err)
-		return "", err
+	tknValid, sts := TokenIsValid(tknStr, &jsess.Claims)
+	if sts.Error != nil {
+		return "", sts
 	}
 
 	if !tknValid {
-		return "", errors.New("token not valid")
+		sts = NewStatus(INVALIDTKN, "token not valid", false, nil)
+		return "", sts
 	}
 
 	if !isExpired(jsess.Claims) {
-		return "", errors.New("token still valid, cannot be updated")
+		sts = NewStatus(TKNSTILLVALID, "token still valid, cannot be updated", false, nil)
+		return "", sts
 	}
 
-	newCookie, err := newToken(&jsess.Claims)
-	if err != nil {
-		return "", err
+	newCookie, sts := newToken(&jsess.Claims)
+	if sts.Error != nil {
+		return "", sts
 	}
 
 	// setting cookie
 	http.SetCookie(jsess.RW, newCookie)
 
 	token := newCookie.Value
-	return token, nil
+	return token, sts
 }

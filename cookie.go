@@ -32,26 +32,31 @@ func newJWTToken(username string, expirationTime time.Time) (string, error) {
 }
 
 // TokenIsValid checks if the token is valid
-func TokenIsValid(stoken string, claims *Claims) (bool, error) {
+func TokenIsValid(stoken string, claims *Claims) (bool, Status) {
+	result := Status{}
 	tkn, err := jwt.ParseWithClaims(stoken, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
 
 	if err != nil {
-		return false, err
+		result = NewStatus(SYSERR, "error validation token", false, err)
+		return false, result
 	}
 
-	return tkn.Valid, nil
+	return tkn.Valid, result
 }
 
 // readCookie read cookie content
-func readCookie(r *http.Request) (string, error) {
+func readCookie(r *http.Request) (string, Status) {
+	sts := Status{}
 	c, err := r.Cookie("token")
+
 	if err != nil {
-		return "", err
+		sts = NewStatus(SYSERR, "error reading cookie", false, sts.Error)
+		return "", sts
 	}
 
-	return c.Value, nil
+	return c.Value, sts
 }
 
 // isExpired check claims expiration
@@ -60,7 +65,9 @@ func isExpired(c Claims) bool {
 }
 
 // newToken set new token id and build cookie
-func newToken(c *Claims) (*http.Cookie, error) {
+func newToken(c *Claims) (*http.Cookie, Status) {
+	sts := Status{}
+
 	cookie := &http.Cookie{}
 	expirationTime := time.Now().Add(5 * time.Minute)
 	c.ExpiresAt = expirationTime.Unix()
@@ -68,12 +75,13 @@ func newToken(c *Claims) (*http.Cookie, error) {
 	tokenString, err := token.SignedString(jwtKey)
 
 	if err != nil {
-		return cookie, err
+		sts = NewStatus(SYSERR, "error generating token", false, err)
+		return cookie, sts
 	}
 
 	return &http.Cookie{
 		Name:    "token",
 		Value:   tokenString,
 		Expires: expirationTime,
-	}, nil
+	}, sts
 }
