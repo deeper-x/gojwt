@@ -91,12 +91,12 @@ func (jsess *JWTSess) Renew() (string, Status) {
 	}
 
 	if !tknValid {
-		sts = NewStatus(INVALIDTKN, "token not valid", false, nil)
+		sts = NewStatus(INVALIDTKN, "token not valid, cannot be updated", false, nil)
 		return "", sts
 	}
 
 	if !isExpired(jsess.Claims) {
-		sts = NewStatus(TKNSTILLVALID, "token still valid, cannot be updated", false, nil)
+		sts = NewStatus(TKNSTILLVALID, "token not expiring, cannot be updated", false, nil)
 		return "", sts
 	}
 

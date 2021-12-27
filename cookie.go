@@ -39,7 +39,7 @@ func TokenIsValid(stoken string, claims *Claims) (bool, Status) {
 	})
 
 	if err != nil {
-		result = NewStatus(SYSERR, "token not valid", false, err)
+		result = NewStatus(SYSERR, "token validation error", false, err)
 		return false, result
 	}
 
