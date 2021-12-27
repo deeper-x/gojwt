@@ -39,7 +39,7 @@ func TokenIsValid(stoken string, claims *Claims) (bool, Status) {
 	})
 
 	if err != nil {
-		result = NewStatus(SYSERR, "error validation token", false, err)
+		result = NewStatus(SYSERR, "token not valid", false, err)
 		return false, result
 	}
 
@@ -61,7 +61,7 @@ func readCookie(r *http.Request) (string, Status) {
 
 // isExpired check claims expiration
 func isExpired(c Claims) bool {
-	return time.Until(time.Unix(c.ExpiresAt, 0)) < 30*time.Second
+	return time.Until(time.Unix(c.ExpiresAt, 0)) < 3*time.Minute
 }
 
 // newToken set new token id and build cookie
