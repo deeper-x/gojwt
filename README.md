@@ -13,6 +13,7 @@ func main() {
 	http.HandleFunc("/protected_content", ProtectedContent)
 	http.HandleFunc("/renew", Renew)
 
+	log.Println("Running server...")
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
@@ -37,8 +38,8 @@ func Login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// client registration
-	token, err := jsess.Register(creds.Username)
+	// client registration, with username registration and token expiration in 10 minutes
+	token, err := jsess.Register(creds.Username, 10)
 
 	if err != nil {
 		log.Println(err)
@@ -49,16 +50,17 @@ func Login(w http.ResponseWriter, req *http.Request) {
 	// success
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(token))
+	log.Println("Token assigned", time.Now())
 }
 
 // ProtectedContent is the registered-users-only content
 func ProtectedContent(w http.ResponseWriter, req *http.Request) {
 	jsess := gojwt.NewJWTSess(w, req)
 
-	ok, err := jsess.IsAuth()
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
+	ok, sts := jsess.IsAuth()
+	if sts.Error != nil {
+		log.Println(sts.Message)
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
@@ -75,13 +77,18 @@ func ProtectedContent(w http.ResponseWriter, req *http.Request) {
 func Renew(w http.ResponseWriter, req *http.Request) {
 	jsess := gojwt.NewJWTSess(w, req)
 
-	token, err := jsess.Renew()
-	if err != nil {
-		log.Println(err)
+	token, sts := jsess.Renew()
+	if sts.Error != nil {
+		log.Println(sts.Message)
 
 		// no token released
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if sts.Code != gojwt.SUCCESS {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Token cannot be renewed\n\n"))
+		w.Write([]byte(sts.Message))
 		return
 	}
 
