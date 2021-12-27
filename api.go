@@ -41,8 +41,8 @@ func NewStatus(cod int64, msg string, sts bool, err error) Status {
 }
 
 //Register Create the Register handler
-func (jsess *JWTSess) Register(kval string) (string, error) {
-	expirationTime := time.Now().Add(5 * time.Minute)
+func (jsess *JWTSess) Register(kval string, durmins time.Duration) (string, error) {
+	expirationTime := time.Now().Add(durmins * time.Minute)
 
 	tokenString, err := newJWTToken(kval, expirationTime)
 	if err != nil {

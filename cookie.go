@@ -61,7 +61,7 @@ func readCookie(r *http.Request) (string, Status) {
 
 // isExpired check claims expiration
 func isExpired(c Claims) bool {
-	return time.Until(time.Unix(c.ExpiresAt, 0)) < 3*time.Minute
+	return time.Until(time.Unix(c.ExpiresAt, 0)) < time.Duration(RENEWMINS)*time.Minute
 }
 
 // newToken set new token id and build cookie

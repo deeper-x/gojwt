@@ -14,3 +14,6 @@ const TKNBROKEN = 103
 
 // SUCCESS is the OK code
 const SUCCESS = 0
+
+// RENEWMINS is the minutes window token can be updated
+const RENEWMINS = 5
