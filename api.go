@@ -24,7 +24,7 @@ func NewJWTSess(w http.ResponseWriter, req *http.Request) *JWTSess {
 }
 
 //Register Create the Register handler
-func (jsess *JWTSess) Register(kval string, durmins time.Duration) (string, error) {
+func (jss *JWTSess) Register(kval string, durmins time.Duration) (string, error) {
 	expirationTime := time.Now().Add(durmins * time.Minute)
 
 	tokenString, err := newJWTToken(kval, expirationTime)
@@ -32,7 +32,7 @@ func (jsess *JWTSess) Register(kval string, durmins time.Duration) (string, erro
 		return "", err
 	}
 
-	http.SetCookie(jsess.RW, &http.Cookie{
+	http.SetCookie(jss.RW, &http.Cookie{
 		Name:    "token",
 		Value:   tokenString,
 		Expires: expirationTime,
@@ -42,13 +42,13 @@ func (jsess *JWTSess) Register(kval string, durmins time.Duration) (string, erro
 }
 
 // IsAuth check if client is allowed
-func (jsess *JWTSess) IsAuth() (bool, error) {
-	tknStr, err := readCookie(jsess.Req)
+func (jss *JWTSess) IsAuth() (bool, error) {
+	tknStr, err := readCookie(jss.Req)
 	if err != nil {
 		return false, err
 	}
 
-	tknValid, err := TokenIsValid(tknStr, &jsess.Claims)
+	tknValid, err := TokenIsValid(tknStr, &jss.Claims)
 	if err != nil {
 		return false, err
 	}
@@ -61,13 +61,13 @@ func (jsess *JWTSess) IsAuth() (bool, error) {
 }
 
 // Renew ask for a new token
-func (jsess *JWTSess) Renew() (string, error) {
-	tknStr, err := readCookie(jsess.Req)
+func (jss *JWTSess) Renew() (string, error) {
+	tknStr, err := readCookie(jss.Req)
 	if err != nil {
 		return "", err
 	}
 
-	tknValid, err := TokenIsValid(tknStr, &jsess.Claims)
+	tknValid, err := TokenIsValid(tknStr, &jss.Claims)
 	if err != nil {
 		return "", err
 	}
@@ -76,17 +76,17 @@ func (jsess *JWTSess) Renew() (string, error) {
 		return "", errors.New("token cannt be renewed")
 	}
 
-	if !isExpiring(jsess.Claims) {
+	if !isExpiring(jss.Claims) {
 		return "", errors.New("token not expired")
 	}
 
-	newCookie, err := newToken(&jsess.Claims)
+	newCookie, err := newToken(&jss.Claims)
 	if err != nil {
 		return "", errors.New("token cannt be generated")
 	}
 
 	// setting cookie
-	http.SetCookie(jsess.RW, newCookie)
+	http.SetCookie(jss.RW, newCookie)
 
 	token := newCookie.Value
 	return token, nil
