@@ -45,7 +45,7 @@ func (jsess *JWTSess) Register(kval string, durmins time.Duration) (string, erro
 func (jsess *JWTSess) IsAuth() (bool, error) {
 	tknStr, err := readCookie(jsess.Req)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 
 	tknValid, err := TokenIsValid(tknStr, &jsess.Claims)
